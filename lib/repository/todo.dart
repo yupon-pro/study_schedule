@@ -1,0 +1,11 @@
+import "package:study_schedule/models/todo.dart";
+
+abstract class TodoRepository {
+  Future<List<Todo>> findAll();
+  Future<List<Todo>> findByDates(List<DateTime> dates);
+  // You must narrow down some kinds of data like achivement, category and so on, 
+  // after withdrawing whole data from database for a certain period.
+  Future<void> save(Todo todo);
+  Future<void> update(Todo todo);
+  Future<void> delete(String id);
+}
