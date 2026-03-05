@@ -19,6 +19,7 @@ class Todo {
   final int? targetStudyAmount;
   final int? actualStudyAmount;
   final DateTime? delayFrom;
+  final String? remarks;
 
   final Achievement achievement;
 
@@ -32,6 +33,7 @@ class Todo {
     this.targetStudyAmount,
     this.actualStudyAmount,
     this.delayFrom,
+    this.remarks,
   });
 
   /// 特定のフィールドだけを更新した新しいインスタンスを作成する
@@ -44,6 +46,7 @@ class Todo {
     int? targetStudyAmount,
     int? actualStudyAmount,
     DateTime? delayFrom,
+    String? remarks,
   }) {
     return Todo(
       id: id, // IDは常に固定
@@ -55,6 +58,7 @@ class Todo {
       targetStudyAmount: targetStudyAmount ?? this.targetStudyAmount,
       actualStudyAmount: actualStudyAmount ?? this.actualStudyAmount,
       delayFrom: delayFrom ?? this.delayFrom,
+      remarks: remarks ?? this.remarks,
     );
   }
 
@@ -71,6 +75,7 @@ class Todo {
       delayFrom: json["delayFrom"] != null 
           ? DateTime.parse(json["delayFrom"] as String) 
           : null,
+      remarks: json["remarks"] as String?,
       achievement: Achievement.values.byName(json["achievement"] ?? "none"),
     );
   }
@@ -87,6 +92,7 @@ class Todo {
       "actualStudyAmount": actualStudyAmount,
       "delayFrom": delayFrom?.toIso8601String(),
       "achievement": achievement.name,
+      "remarks": remarks,
     };
   }
 }

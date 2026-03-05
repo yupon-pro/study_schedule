@@ -1,101 +1,211 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:study_schedule/models/todo.dart';
+import 'package:study_schedule/providers/todo_state.dart';
+import 'package:provider/provider.dart';
 
 class TodoTask extends StatefulWidget {
   final Todo todo;
   const TodoTask({
-    super.key, 
-    required this.todo
+    super.key,
+    required this.todo,
   });
 
   @override
   State<TodoTask> createState() => _TodoTaskState();
 }
 
+// TODO 編集版も表示するには、初期の値をそれぞれフィールドにはじめから入れるようにしてあげたほうが良い。
+
 class _TodoTaskState extends State<TodoTask> {
   int? actualStudyHours;
-  int? actualStudyMiniutes;
-
+  int? actualStudyMinutes;
   int? actualStudyAmount;
+  String? remarks;
+  Achievement? achievement;
+  bool _isExpanded = false;
 
-  final _hours = [for(var i = 1; i <= 24; i++) i];
-  final _minutes = [for(var i = 1; i <= 60; i++) i];
+  final _hours = [for (var i = 0; i <= 24; i++) i];
+  final _minutes = [for (var i = 0; i <= 59; i++) i];
 
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        vertical: 10,
-        horizontal: 12,
-      ),
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 14,
-        ),
-        decoration: const BoxDecoration(
-          color: Color(0xFF55C500),
-          borderRadius: BorderRadius.all(
-            Radius.circular(32)
-          )
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              widget.todo.title,
-              style: const TextStyle(
-                fontSize: 10,
-              )
-            ),
-            widget.todo.targetStudyAmount != null 
-            ? Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                CupertinoPicker(
-                  itemExtent: 30, 
-                  onSelectedItemChanged: (int index) {
-                    setState(() {
-                      // \d（数字）が1回以上続く部分を探す
-                      final match = RegExp(r'\d+').firstMatch(_hours[index].toString());
-                      final num = match?.group(0);
+  // Providerを呼び出してデータを保存する処理
+  void _saveToProvider() {
+    final todoState = context.read<TodoState>();
+    
+    // Durationの再計算（hoursとminutesを統合）
+    final totalDuration = 
+      actualStudyHours == null && actualStudyMinutes == null 
+      ? null 
+      : (actualStudyHours ?? 0) * 60 + (actualStudyMinutes ?? 0);
 
-                      if (num != null) {
-                        actualStudyHours = int.parse(num);
-                      }
-                    });
-                  }, 
-                  children: _hours.map((e) => Text("${e.toString()}時間")).toList()
-                ),
-                CupertinoPicker(
-                  itemExtent: 30, 
-                  onSelectedItemChanged: (int index) {
-                    setState(() {
-                      // \d（数字）が1回以上続く部分を探す
-                      final match = RegExp(r'\d+').firstMatch(_hours[index].toString());
-                      final num = match?.group(0);
-
-                      if (num != null) {
-                        actualStudyMiniutes = int.parse(num);
-                      }
-                    });
-                  }, 
-                  children: _minutes.map((e) => Text("${e.toString()}分")).toList()
-                )
-              ],
-            ) 
-            : SizedBox.shrink(),
-
-            widget.todo.actualStudyAmount != null
-            ? FormField(builder: )
-            : SizedBox.shrink(),
-          ]
-        ),
+    todoState.updateTodo(widget.todo.copyWith(
+        actualStudyTime: totalDuration,
+        actualStudyAmount: actualStudyAmount,
+        remarks: remarks,
+        achievement: achievement,
       )
     );
   }
 
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFF55C500),
+          borderRadius: BorderRadius.all(Radius.circular(32)),
+        ),
+        child: Column(
+          children: [
+            // ヘッダー部分（タイトルと達成度ラジオボタン）
+            ListTile(
+              title: Text(
+                widget.todo.title,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+              ),
+              // 新しいバージョンではRadioGroupが推奨される。
+              subtitle: RadioGroup<Achievement>(
+                groupValue: achievement,
+                onChanged: (val) {
+                  setState(() {
+                    achievement = val ?? Achievement.none;
+                  });
+                  _saveToProvider();
+                }, 
+                child: Row(
+                  children: [
+                    _achievementRadio(Achievement.fulfilled, "完了"),
+                    _achievementRadio(Achievement.partial, "未完"),
+                    _achievementRadio(Achievement.failure, "失敗"),
+                  ],
+                )
+              )
+            ),
+
+            // 詳細入力（アコーディオン部分）
+            ExpansionPanelList(
+              elevation: 0,
+              expandedHeaderPadding: EdgeInsets.zero,
+              expansionCallback: (panelIndex, isExpanded) {
+                setState(() {
+                  _isExpanded = isExpanded;
+                });
+              },
+              children: [
+                ExpansionPanel(
+                  canTapOnHeader: true,
+                  backgroundColor: Colors.white,
+                  headerBuilder: (context, isExpanded) {
+                    return const ListTile(
+                      title: Text("実績を記録する", style: TextStyle(fontSize: 13)),
+                    );
+                  },
+                  isExpanded: _isExpanded,
+                  body: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      children: [
+                        // 時間入力（TargetTimeがある場合のみ）
+                        if (widget.todo.targetStudyTime != null)
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              _timePicker("時間", _hours, actualStudyHours, (val) {
+                                setState(() => actualStudyHours = val);
+                                _saveToProvider(); // 変更のたびに保存、または一括保存ボタンを置く
+                              }),
+                              _timePicker("分", _minutes, actualStudyMinutes, (val) {
+                                setState(() => actualStudyMinutes = val);
+                                _saveToProvider();
+                              }),
+                            ],
+                          ),
+
+                        const SizedBox(height: 16),
+
+                        // 学習量入力（TargetAmountがある場合のみ）
+                        if (widget.todo.targetStudyAmount != null)
+                          TextField(
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              labelText: "実際の学習量",
+                              suffixText: "ページ/問",
+                            ),
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                              LengthLimitingTextInputFormatter(3),
+                            ],
+                            onChanged: (val) {
+                              actualStudyAmount = int.tryParse(val);
+                            },
+                          ),
+
+                        const SizedBox(height: 16),
+
+                        // メモ入力
+                        TextField(
+                          maxLines: 2,
+                          decoration: const InputDecoration(
+                            labelText: "ここにメモを記録",
+                            border: OutlineInputBorder(),
+                          ),
+                          onChanged: (val) {
+                            remarks = val;
+                          },
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        ElevatedButton(
+                          onPressed: () => _saveToProvider(), 
+                          child: const Text("詳細を保存"),
+                        )
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 達成度ラジオボタンのヘルパー
+  Widget _achievementRadio(Achievement value, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Radio<Achievement>(
+          value: value,
+          activeColor: Colors.white,
+        ),
+        Text(label, style: const TextStyle(fontSize: 10, color: Colors.white)),
+      ],
+    );
+  }
+
+  // CupertinoPickerのヘルパー
+  Widget _timePicker(String label, List<int> items, int? selectedValue, ValueChanged<int> onChanged) {
+    return Column(
+      children: [
+        Text(label, style: const TextStyle(fontSize: 10)),
+        SizedBox(
+          width: 80,
+          height: 100,
+          child: CupertinoPicker(
+            scrollController: FixedExtentScrollController(
+              initialItem: items.indexOf(selectedValue ?? 0),
+            ),
+            itemExtent: 32,
+            onSelectedItemChanged: (index) => onChanged(items[index]),
+            children: items.map((e) => Center(child: Text(e.toString()))).toList(),
+          ),
+        ),
+      ],
+    );
+  }
 }
