@@ -16,18 +16,46 @@ class TodoTask extends StatefulWidget {
   State<TodoTask> createState() => _TodoTaskState();
 }
 
-// TODO 編集版も表示するには、初期の値をそれぞれフィールドにはじめから入れるようにしてあげたほうが良い。
+// 編集版も表示するには、初期の値をそれぞれフィールドにはじめから入れるようにしてあげたほうが良い。
 
 class _TodoTaskState extends State<TodoTask> {
   int? actualStudyHours;
   int? actualStudyMinutes;
   int? actualStudyAmount;
   String? remarks;
-  Achievement? achievement;
+  late Achievement? achievement;
   bool _isExpanded = false;
 
   final _hours = [for (var i = 0; i <= 24; i++) i];
   final _minutes = [for (var i = 0; i <= 59; i++) i];
+
+  late TextEditingController _remarksEditingController;
+  late TextEditingController _studyAmountEditingController;
+
+  @override
+  void initState() {
+    int? studyDuration = widget.todo.actualStudyTime;
+    if(studyDuration != null) {
+      actualStudyHours = studyDuration ~/ 60;
+      actualStudyMinutes = studyDuration % 60;
+    }
+
+    actualStudyAmount = widget.todo.actualStudyAmount;
+    remarks = widget.todo.remarks;
+    achievement = widget.todo.achievement;
+
+    _remarksEditingController = TextEditingController(text: remarks);
+    _studyAmountEditingController = TextEditingController(text: actualStudyAmount?.toString());
+    
+    super.initState();
+  }  
+
+  @override
+  void dispose() {
+    _remarksEditingController.dispose();
+    _studyAmountEditingController.dispose();
+    super.dispose();
+  }
 
   // Providerを呼び出してデータを保存する処理
   void _saveToProvider() {
@@ -38,6 +66,9 @@ class _TodoTaskState extends State<TodoTask> {
       actualStudyHours == null && actualStudyMinutes == null 
       ? null 
       : (actualStudyHours ?? 0) * 60 + (actualStudyMinutes ?? 0);
+
+    actualStudyAmount = int.tryParse(_studyAmountEditingController.text);
+    remarks = _remarksEditingController.text;
 
     todoState.updateTodo(widget.todo.copyWith(
         actualStudyTime: totalDuration,
@@ -129,6 +160,7 @@ class _TodoTaskState extends State<TodoTask> {
                         if (widget.todo.targetStudyAmount != null)
                           TextField(
                             keyboardType: TextInputType.number,
+                            controller: _studyAmountEditingController,
                             decoration: const InputDecoration(
                               labelText: "実際の学習量",
                               suffixText: "ページ/問",
@@ -137,23 +169,18 @@ class _TodoTaskState extends State<TodoTask> {
                               FilteringTextInputFormatter.digitsOnly,
                               LengthLimitingTextInputFormatter(3),
                             ],
-                            onChanged: (val) {
-                              actualStudyAmount = int.tryParse(val);
-                            },
                           ),
 
                         const SizedBox(height: 16),
 
                         // メモ入力
                         TextField(
-                          maxLines: 2,
+                          maxLines: 5,
+                          controller: _remarksEditingController,
                           decoration: const InputDecoration(
                             labelText: "ここにメモを記録",
                             border: OutlineInputBorder(),
                           ),
-                          onChanged: (val) {
-                            remarks = val;
-                          },
                         ),
 
                         const SizedBox(height: 16),
@@ -192,7 +219,6 @@ class _TodoTaskState extends State<TodoTask> {
   Widget _timePicker(String label, List<int> items, int? selectedValue, ValueChanged<int> onChanged) {
     return Column(
       children: [
-        Text(label, style: const TextStyle(fontSize: 10)),
         SizedBox(
           width: 80,
           height: 100,
@@ -205,6 +231,7 @@ class _TodoTaskState extends State<TodoTask> {
             children: items.map((e) => Center(child: Text(e.toString()))).toList(),
           ),
         ),
+        Text(label, style: const TextStyle(fontSize: 10)),
       ],
     );
   }
