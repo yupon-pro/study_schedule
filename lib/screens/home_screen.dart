@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:study_schedule/models/todo.dart';
 import 'package:study_schedule/providers/todo_state.dart';
+import 'package:study_schedule/widgets/todo_task_filter.dart';
 import 'package:study_schedule/widgets/todo_task_list.dart';
 import 'package:table_calendar/table_calendar.dart';
 
@@ -12,18 +13,42 @@ class HomeScreen extends StatefulWidget {
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
+
 class _HomeScreenState extends State<HomeScreen> {
+  List<String> segments = ["All", "Ongoing", "Completed"];
+  String selectedFilter = "All";
+
   DateTime _selectedDay = DateTime.now();
   DateTime _focusedDay = DateTime.now();
   CalendarFormat _calendarFormat = CalendarFormat.week;
+
+  void onHandleFilter(String newSelection) {
+    setState(() {
+      selectedFilter = newSelection;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final int thisYear = DateTime.now().year;
     final todoState = context.watch<TodoState>();
     
-    // 2. 選択された日付のリストを「今」のデータから抽出する
-    final filteredTodoList = todoState.getTodosByDate(_selectedDay);
+    
+    final filteredTodoList = todoState
+      .getTodosByDate(_selectedDay)
+      .where((todo) {
+        switch (selectedFilter) {
+          case "All":
+            return true;
+          case "Ongoing":
+            return todo.achievement != Achievement.fulfilled;
+          case "Completed":
+            return todo.achievement == Achievement.fulfilled;
+          default:
+            return false;
+        }
+      })
+      .toList();
 
     String todayStr = DateFormat("yyyy/MM/dd").format(_selectedDay);
 
@@ -33,6 +58,12 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Column(
         children: <Widget>[
+          TodoTaskFilter(
+            segments: segments, 
+            currentSelection: selectedFilter, 
+            onHandleFilter: onHandleFilter
+          ),
+
           TableCalendar(
             focusedDay: _focusedDay,
             firstDay: DateTime.utc(thisYear - 5, 1, 1),

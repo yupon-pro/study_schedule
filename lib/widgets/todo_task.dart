@@ -107,9 +107,9 @@ class _TodoTaskState extends State<TodoTask> {
                 }, 
                 child: Row(
                   children: [
-                    _achievementRadio(Achievement.fulfilled, "完了"),
-                    _achievementRadio(Achievement.partial, "未完"),
-                    _achievementRadio(Achievement.failure, "失敗"),
+                    _achievementRadio(Achievement.fulfilled, "Complete!"),
+                    _achievementRadio(Achievement.partial, "Partially"),
+                    _achievementRadio(Achievement.failure, "Failure/Ignore"),
                   ],
                 )
               )
@@ -130,7 +130,7 @@ class _TodoTaskState extends State<TodoTask> {
                   backgroundColor: Colors.white,
                   headerBuilder: (context, isExpanded) {
                     return const ListTile(
-                      title: Text("実績を記録する", style: TextStyle(fontSize: 13)),
+                      title: Text("Record in detail", style: TextStyle(fontSize: 13)),
                     );
                   },
                   isExpanded: _isExpanded,
@@ -143,11 +143,11 @@ class _TodoTaskState extends State<TodoTask> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
-                              _timePicker("時間", _hours, actualStudyHours, (val) {
+                              _timePicker("H", _hours, actualStudyHours, (val) {
                                 setState(() => actualStudyHours = val);
                                 _saveToProvider(); // 変更のたびに保存、または一括保存ボタンを置く
                               }),
-                              _timePicker("分", _minutes, actualStudyMinutes, (val) {
+                              _timePicker("M", _minutes, actualStudyMinutes, (val) {
                                 setState(() => actualStudyMinutes = val);
                                 _saveToProvider();
                               }),
@@ -162,8 +162,8 @@ class _TodoTaskState extends State<TodoTask> {
                             keyboardType: TextInputType.number,
                             controller: _studyAmountEditingController,
                             decoration: const InputDecoration(
-                              labelText: "実際の学習量",
-                              suffixText: "ページ/問",
+                              labelText: "Study amount",
+                              suffixText: "pages/questions",
                             ),
                             inputFormatters: [
                               FilteringTextInputFormatter.digitsOnly,
@@ -178,7 +178,7 @@ class _TodoTaskState extends State<TodoTask> {
                           maxLines: 5,
                           controller: _remarksEditingController,
                           decoration: const InputDecoration(
-                            labelText: "ここにメモを記録",
+                            labelText: "Take a note here",
                             border: OutlineInputBorder(),
                           ),
                         ),
@@ -187,7 +187,7 @@ class _TodoTaskState extends State<TodoTask> {
 
                         ElevatedButton(
                           onPressed: () => _saveToProvider(), 
-                          child: const Text("詳細を保存"),
+                          child: const Text("Save"),
                         )
                       ],
                     ),
