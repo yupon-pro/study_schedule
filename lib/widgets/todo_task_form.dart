@@ -78,15 +78,17 @@ class _TodoTaskFormState extends State<TodoTaskForm> {
           throw "Something went wrong. Please report to developer";
         }
 
-        for (var targetDate in dueDateList) {
-          todoState.saveTodo(Todo(
+        List<Todo> todoList = dueDateList
+          .map((targetDate) => Todo(
             id: uuid.v4(), 
             title: title, 
             targetStudyTime: targetStudyTime,
             targetStudyAmount: targetStudyAmount,
             date: targetDate
-          ));
-        }
+          ))
+          .toList();
+
+        todoState.saveTodos(todoList);
       }
     }
 

@@ -6,6 +6,7 @@ abstract class TodoRepository {
   // You must narrow down some kinds of data like achivement, category and so on, 
   // after withdrawing whole data from database for a certain period.
   Future<void> save(Todo todo);
+  Future<void> saveAll(List<Todo> todos);
   Future<void> update(Todo todo);
   Future<void> delete(String id);
 }

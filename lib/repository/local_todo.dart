@@ -37,6 +37,17 @@ class TodoStore implements TodoRepository {
   }
 
   @override
+  Future<void> saveAll(List<Todo> todos) async {
+    final prefs = await SharedPreferences.getInstance();
+    final all = await findAll(); // 既存データを取得
+    all.addAll(todos);
+    
+    // toJson() を介して encode する
+    final target = all.map((m) => json.encode(m.toJson())).toList();
+    await prefs.setStringList(_key, target);
+  }
+
+  @override
   Future<void> update(Todo todo) async {
     final prefs = await SharedPreferences.getInstance();
     final all = await findAll();

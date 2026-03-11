@@ -42,6 +42,11 @@ class TodoState extends ChangeNotifier {
     await loadTodos(); 
   }
 
+  Future<void> saveTodos(List<Todo> todos) async {
+    await todoRep.saveAll(todos);
+    await loadTodos();
+  }
+
   Future<void> updateTodo(Todo todo) async {
     await todoRep.update(todo);
     await loadTodos();
