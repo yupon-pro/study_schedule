@@ -217,7 +217,7 @@ class _TodoTaskState extends State<TodoTask> {
 
   // CupertinoPickerのヘルパー
   Widget _timePicker(String label, List<int> items, int? selectedValue, ValueChanged<int> onChanged) {
-    return Column(
+    return Row(
       children: [
         SizedBox(
           width: 80,
