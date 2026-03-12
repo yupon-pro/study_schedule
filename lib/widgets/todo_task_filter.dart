@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class TodoTaskFilter extends StatelessWidget {
   final List<String> segments;
   final String currentSelection;
-  final Function(String) onHandleFilter;
+  final ValueChanged<String> onHandleFilter;
 
   const TodoTaskFilter({
     super.key,

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:study_schedule/models/todo.dart';
 import 'package:study_schedule/providers/todo_state.dart';
 import 'package:provider/provider.dart';
+import 'package:study_schedule/widgets/todo_time_picker.dart';
 
 class TodoTask extends StatefulWidget {
   final Todo todo;
@@ -16,7 +17,7 @@ class TodoTask extends StatefulWidget {
   State<TodoTask> createState() => _TodoTaskState();
 }
 
-// 編集版も表示するには、初期の値をそれぞれフィールドにはじめから入れるようにしてあげたほうが良い。
+// 編集版も同じwidgetで表示するには、初期の値をそれぞれフィールドにはじめから入れるようにしてあげたほうが良い。
 
 class _TodoTaskState extends State<TodoTask> {
   int? actualStudyHours;
@@ -58,7 +59,7 @@ class _TodoTaskState extends State<TodoTask> {
   }
 
   // Providerを呼び出してデータを保存する処理
-  void _saveToProvider() {
+  void _saveToProvider() async {
     final todoState = context.read<TodoState>();
     
     // Durationの再計算（hoursとminutesを統合）
@@ -70,7 +71,7 @@ class _TodoTaskState extends State<TodoTask> {
     actualStudyAmount = int.tryParse(_studyAmountEditingController.text);
     remarks = _remarksEditingController.text;
 
-    todoState.updateTodo(widget.todo.copyWith(
+    await todoState.updateTodo(widget.todo.copyWith(
         actualStudyTime: totalDuration,
         actualStudyAmount: actualStudyAmount,
         remarks: remarks,
@@ -81,6 +82,9 @@ class _TodoTaskState extends State<TodoTask> {
 
   @override
   Widget build(BuildContext context) {
+    final targetStudyTimeOnDisplay = widget.todo.targetStudyTime;
+    final targetStudyAmountOnDisplay = widget.todo.targetStudyAmount;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
       child: Container(
@@ -139,35 +143,67 @@ class _TodoTaskState extends State<TodoTask> {
                     child: Column(
                       children: [
                         // 時間入力（TargetTimeがある場合のみ）
-                        if (widget.todo.targetStudyTime != null)
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        if (targetStudyTimeOnDisplay != null)
+                          Column(
                             children: [
-                              _timePicker("H", _hours, actualStudyHours, (val) {
-                                setState(() => actualStudyHours = val);
-                                _saveToProvider(); // 変更のたびに保存、または一括保存ボタンを置く
-                              }),
-                              _timePicker("M", _minutes, actualStudyMinutes, (val) {
-                                setState(() => actualStudyMinutes = val);
-                                _saveToProvider();
-                              }),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  Text("Study Time Target: "),
+                                  Text("${targetStudyTimeOnDisplay ~/ 60}H ${targetStudyTimeOnDisplay % 60}M")
+                                ],
+                              ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  TodoTimePicker(
+                                    label: "H", 
+                                    items: _hours, 
+                                    selectedValue:  actualStudyHours, 
+                                    handleTimeChange:  (val) {
+                                      setState(() => actualStudyHours = val);
+                                      _saveToProvider(); // 変更のたびに保存、または一括保存ボタンを置く
+                                    }
+                                  ),
+                                  TodoTimePicker(
+                                    label: "M", 
+                                    items: _minutes, 
+                                    selectedValue: actualStudyMinutes, 
+                                    handleTimeChange: (val) {
+                                      setState(() => actualStudyMinutes = val);
+                                      _saveToProvider();
+                                    }
+                                  ),
+                                ],
+                              ),
                             ],
                           ),
+                          
 
                         const SizedBox(height: 16),
 
                         // 学習量入力（TargetAmountがある場合のみ）
-                        if (widget.todo.targetStudyAmount != null)
-                          TextField(
-                            keyboardType: TextInputType.number,
-                            controller: _studyAmountEditingController,
-                            decoration: const InputDecoration(
-                              labelText: "Study amount",
-                              suffixText: "pages/questions",
-                            ),
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                              LengthLimitingTextInputFormatter(3),
+                        if (targetStudyAmountOnDisplay != null)
+                          Column(
+                            children: [
+                              Row(
+                                children: [
+                                  Text("Study Amount Target:"),
+                                  Text("$targetStudyAmountOnDisplay pages/questions")
+                                ],
+                              ),
+                              TextField(
+                                keyboardType: TextInputType.number,
+                                controller: _studyAmountEditingController,
+                                decoration: const InputDecoration(
+                                  labelText: "Study amount",
+                                  suffixText: "pages/questions",
+                                ),
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                  LengthLimitingTextInputFormatter(3),
+                                ],
+                              ),
                             ],
                           ),
 
@@ -211,27 +247,6 @@ class _TodoTaskState extends State<TodoTask> {
           activeColor: Colors.white,
         ),
         Text(label, style: const TextStyle(fontSize: 10, color: Colors.white)),
-      ],
-    );
-  }
-
-  // CupertinoPickerのヘルパー
-  Widget _timePicker(String label, List<int> items, int? selectedValue, ValueChanged<int> onChanged) {
-    return Row(
-      children: [
-        SizedBox(
-          width: 80,
-          height: 100,
-          child: CupertinoPicker(
-            scrollController: FixedExtentScrollController(
-              initialItem: items.indexOf(selectedValue ?? 0),
-            ),
-            itemExtent: 32,
-            onSelectedItemChanged: (index) => onChanged(items[index]),
-            children: items.map((e) => Center(child: Text(e.toString()))).toList(),
-          ),
-        ),
-        Text(label, style: const TextStyle(fontSize: 10)),
       ],
     );
   }

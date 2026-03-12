@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:study_schedule/models/todo.dart';
 import 'package:study_schedule/providers/todo_state.dart';
 import 'package:study_schedule/widgets/todo_calendar.dart';
+import 'package:study_schedule/widgets/todo_time_picker.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
@@ -23,6 +24,19 @@ class TodoTaskForm extends StatefulWidget {
 }
 
 class _TodoTaskFormState extends State<TodoTaskForm> {
+  bool _isLoading = false;
+  void loadTrigger(bool initiate) {
+    if(initiate) {
+      setState(() {
+        _isLoading = true;
+      });
+    }else {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
   final _formKey = GlobalKey<FormState>();
   final Map<String, dynamic> _formData = {};
 
@@ -43,7 +57,7 @@ class _TodoTaskFormState extends State<TodoTaskForm> {
   DateTime _focusedDay = DateTime.now();
   CalendarFormat _calendarFormat = CalendarFormat.week;
 
-  void onSubmit() {
+  void onSubmit() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save(); // これで TextField の値が確定する
 
@@ -58,41 +72,61 @@ class _TodoTaskFormState extends State<TodoTaskForm> {
       : (targetStudyHours ?? 0) * 60 + (targetStudyMinutes ?? 0);
       int? targetStudyAmount = _formData.containsKey("targetStudyAmount") ? int.parse(_formData["targetStudyAmount"]) : null;
       
-      if(_selectedDateFilter == "this date") {
-        DateTime targetDate = _selectedDay;
-        todoState.saveTodo(Todo(
-          id: uuid.v4(), 
-          title: title, 
-          targetStudyTime: targetStudyTime,
-          targetStudyAmount: targetStudyAmount,
-          date: targetDate
-        ));
-      }else{
-        List<DateTime> dueDateList = pickupDueDates(
-          targetDate: _selectedDay, 
-          days: dueDateFilter[_selectedDateFilter], 
-          weeks: _targetWeeks
-        );
+      try{
+        loadTrigger(true);
 
-        if(dueDateList.isEmpty) {
-          throw "Something went wrong. Please report to developer";
-        }
-
-        List<Todo> todoList = dueDateList
-          .map((targetDate) => Todo(
+        if(_selectedDateFilter == "this date") {
+          DateTime targetDate = _selectedDay;
+          await todoState.saveTodo(Todo(
             id: uuid.v4(), 
             title: title, 
             targetStudyTime: targetStudyTime,
             targetStudyAmount: targetStudyAmount,
             date: targetDate
-          ))
-          .toList();
+          ));
 
-        todoState.saveTodos(todoList);
+        }else{
+          List<DateTime> dueDateList = pickupDueDates(
+            targetDate: _selectedDay, 
+            days: dueDateFilter[_selectedDateFilter], 
+            weeks: _targetWeeks
+          );
+
+          if(dueDateList.isEmpty) {
+            throw "Something went wrong. Please report to developer";
+          }
+
+          List<Todo> todoList = dueDateList
+            .map((targetDate) => Todo(
+              id: uuid.v4(), 
+              title: title, 
+              targetStudyTime: targetStudyTime,
+              targetStudyAmount: targetStudyAmount,
+              date: targetDate
+            ))
+            .toList();
+
+          await todoState.saveTodos(todoList);
+        }
+
+        if(mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("You successfully saved task!"))
+          );
+          Navigator.of(context).pop();
+        }
+
+      } catch (e) {
+        if(mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("You failed to task!"))
+        );
+        }
+
+      } finally{
+        loadTrigger(false);
       }
     }
-
-    Navigator.of(context).pop();
   }
 
   @override
@@ -121,7 +155,7 @@ class _TodoTaskFormState extends State<TodoTaskForm> {
                   ],
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter some text';
+                      return 'Please write a title of your task';
                     }
                     return null;
                   },
@@ -133,39 +167,25 @@ class _TodoTaskFormState extends State<TodoTaskForm> {
                 FormField(
                   builder: (state) {
                     return Row(
-                      children: <Widget>[
-                        SizedBox(
-                          width: 80,
-                          height: 100,
-                          child: CupertinoPicker(
-                            scrollController: FixedExtentScrollController(
-                              initialItem: 0,
-                            ),
-                            itemExtent: 32,
-                            onSelectedItemChanged: (index) {
-                              _formData["targetStudyHours"] = _hours[index];
-                            },
-                            children: _hours.map((e) => Center(child: Text("${e.toString()} hours"))).toList(),
-                          ),
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        TodoTimePicker(
+                          label: "H", 
+                          items: _hours, 
+                          handleTimeChange:  (index) {
+                            _formData["targetStudyHours"] = _hours[index];
+                          },
                         ),
-
-                        SizedBox(
-                          width: 80,
-                          height: 100,
-                          child: CupertinoPicker(
-                            scrollController: FixedExtentScrollController(
-                              initialItem: 0,
-                            ),
-                            itemExtent: 32,
-                            onSelectedItemChanged: (index) {
-                              _formData["targetStudyMinutes"] = _minutes[index];
-                            },
-                            children: _minutes.map((e) => Center(child: Text("${e.toString()} minutes"))).toList(),
-                          ),
-                        )
+                        TodoTimePicker(
+                          label: "M", 
+                          items: _minutes, 
+                          handleTimeChange: (index) {
+                            _formData["targetStudyMinutes"] = _minutes[index];
+                          },
+                        ),
                       ],
                     );
-                  }
+                  },
                 ),
 
                 TextFormField(
@@ -218,9 +238,9 @@ class _TodoTaskFormState extends State<TodoTaskForm> {
                         }
                       }
                     ),
-                    
-                    _selectedDateFilter != "this date" 
-                    ? TextFormField(
+
+                    if(_selectedDateFilter != "this date")
+                      TextFormField(
                         keyboardType: TextInputType.number,
                         // controller: _studyAmountEditingController,
                         decoration: const InputDecoration(
@@ -233,7 +253,7 @@ class _TodoTaskFormState extends State<TodoTaskForm> {
                         ],
                         validator: (val) {
                           if (val == null || val.isEmpty || val == "0") {
-                            return "Please select weeks more than 1 weeks";
+                            return "Please select 1 weeks or more";
                           }
 
                           return null;
@@ -246,22 +266,24 @@ class _TodoTaskFormState extends State<TodoTaskForm> {
                             }
                           });
                         },
-                      ) 
-                    : SizedBox.shrink()
+                      )
                   ],
                 ),
 
                 Container(
                   margin: EdgeInsets.only(top: 20),
-
                   child: SizedBox(
                     height: 30,
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () => onSubmit(),
-                      child: Text(
-                        "Submit",
-                      ),
+                      onPressed: _isLoading ? null : onSubmit,
+                      child: _isLoading 
+                        ? const SizedBox(
+                            height: 20, 
+                            width: 20, 
+                            child: CircularProgressIndicator(strokeWidth: 2)
+                          )
+                        : const Text("Submit"),
                     ),
                   ),
                 ),
