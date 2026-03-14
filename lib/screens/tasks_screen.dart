@@ -4,21 +4,21 @@ import 'package:provider/provider.dart';
 import 'package:study_schedule/local_store/display_carryover.dart';
 import 'package:study_schedule/models/todo.dart';
 import 'package:study_schedule/providers/todo_state.dart';
-import 'package:study_schedule/widgets/todo_calendar.dart';
-import 'package:study_schedule/widgets/todo_delay_dialog.dart';
-import 'package:study_schedule/widgets/todo_task_filter.dart';
-import 'package:study_schedule/widgets/todo_task_form.dart';
-import 'package:study_schedule/widgets/todo_task_list.dart';
+import 'package:study_schedule/widgets/common/filter_segment.dart';
+import 'package:study_schedule/widgets/todo/todo_calendar.dart';
+import 'package:study_schedule/widgets/todo/todo_delay_dialog.dart';
+import 'package:study_schedule/widgets/todo/todo_task_form.dart';
+import 'package:study_schedule/widgets/todo/todo_task_list.dart';
 import 'package:table_calendar/table_calendar.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class TasksScreen extends StatefulWidget {
+  const TasksScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<TasksScreen> createState() => _TasksScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _TasksScreenState extends State<TasksScreen> {
   List<String> segments = ["All", "Ongoing", "Completed"];
   String selectedFilter = "All";
 
@@ -105,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Column(
         children: <Widget>[
-          TodoTaskFilter(
+          FilterSegment(
             segments: segments, 
             currentSelection: selectedFilter, 
             onHandleFilter: onHandleFilter

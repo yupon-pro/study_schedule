@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-class TodoTaskFilter extends StatelessWidget {
+class FilterSegment extends StatelessWidget {
   final List<String> segments;
   final String currentSelection;
   final ValueChanged<String> onHandleFilter;
 
-  const TodoTaskFilter({
+  const FilterSegment({
     super.key,
     required this.segments,
     required this.currentSelection,

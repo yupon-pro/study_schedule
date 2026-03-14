@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:study_schedule/models/todo.dart';
-import 'package:study_schedule/widgets/todo_task.dart';
+import 'package:study_schedule/widgets/todo/todo_task.dart';
 
 class TodoTaskList extends StatelessWidget {
   final List<Todo> todoList;
