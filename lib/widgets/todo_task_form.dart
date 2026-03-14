@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:study_schedule/models/todo.dart';
@@ -119,7 +118,7 @@ class _TodoTaskFormState extends State<TodoTaskForm> {
       } catch (e) {
         if(mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("You failed to task!"))
+          const SnackBar(content: Text("You failed to record tasks!"))
         );
         }
 

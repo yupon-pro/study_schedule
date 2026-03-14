@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:study_schedule/models/todo.dart';
 import 'package:study_schedule/providers/todo_state.dart';
 import 'package:study_schedule/widgets/todo_calendar.dart';
+import 'package:study_schedule/widgets/todo_delay_dialog.dart';
 import 'package:study_schedule/widgets/todo_task_filter.dart';
 import 'package:study_schedule/widgets/todo_task_form.dart';
 import 'package:study_schedule/widgets/todo_task_list.dart';
@@ -37,6 +38,30 @@ class _HomeScreenState extends State<HomeScreen> {
           return TodoTaskForm();
         })
     );
+  }
+
+  void _checkYesterdayTasks() {
+    final todoState = context.read<TodoState>();
+    final yesterdayIncompleteTasks = todoState
+      .getTodosByDate(DateTime.now().subtract(Duration(days: 1)))
+      .where((todo) => todo.achievement != Achievement.fulfilled)
+      .toList();
+
+    if (yesterdayIncompleteTasks.isNotEmpty) {
+      showDialog(
+        context: context,
+        barrierDismissible: false, // 外側をタップしても閉じないようにする
+        builder: (context) => TodoDelayDialog(todoList: yesterdayIncompleteTasks),
+      );
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+        _checkYesterdayTasks();
+    });    
   }
 
   @override

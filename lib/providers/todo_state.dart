@@ -52,6 +52,11 @@ class TodoState extends ChangeNotifier {
     await loadTodos();
   }
 
+  Future<void> updateTodos(List<Todo> todos) async {
+    await todoRep.updateAll(todos);
+    await loadTodos();
+  }
+
   Future<void> deleteTodo(String id) async {
     await todoRep.delete(id);
     await loadTodos();

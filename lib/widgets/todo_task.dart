@@ -101,7 +101,7 @@ class _TodoTaskState extends State<TodoTask> {
                 style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
               ),
               // 新しいバージョンではRadioGroupが推奨される。
-              subtitle: RadioGroup<Achievement>(
+              subtitle: RadioGroup<Achievement> (
                 groupValue: achievement,
                 onChanged: (val) {
                   setState(() {

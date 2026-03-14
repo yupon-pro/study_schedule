@@ -61,6 +61,22 @@ class TodoStore implements TodoRepository {
   }
 
   @override
+  Future<void> updateAll(List<Todo> todos) async {
+    final prefs = await SharedPreferences.getInstance();
+    final all = await findAll();
+
+    final updates = all.map((prev) {
+      final index = todos.indexWhere((todo) => todo.id == prev.id);
+      return index == -1 ? prev : todos[index];
+    }).toList();
+    // Calculation cost is O(n^2)...
+    
+    // toJson() を介して encode する
+    final target = updates.map((m) => json.encode(m.toJson())).toList();
+    await prefs.setStringList(_key, target);
+  }
+
+  @override
   Future<void> delete(String id) async {
     final prefs = await SharedPreferences.getInstance();
     final all = await findAll();
