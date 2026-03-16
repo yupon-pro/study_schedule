@@ -37,6 +37,17 @@ class TodoState extends ChangeNotifier {
     }).toList();
   }
 
+  List<Todo> getTodosByDates(List<DateTime> dates) {
+    return _todos.where((todo) {
+      return dates.any((d) => 
+        d.year == todo.date.year &&
+        d.month == todo.date.month &&
+        d.day == todo.date.day
+      );
+    }).toList();
+  }
+
+
   Future<void> saveTodo(Todo todo) async {
     await todoRep.save(todo);
     await loadTodos(); 

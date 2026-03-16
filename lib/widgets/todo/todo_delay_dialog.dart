@@ -16,28 +16,28 @@ class TodoDelayDialog extends StatefulWidget {
 
 class _TodoDelayDialogState extends State<TodoDelayDialog> {
   bool _isLoading = false;
-  late List<bool> todoCarriedList;
+  late List<bool> _selectedItems;
 
   @override
   void initState() {
-    todoCarriedList = List<bool>.filled(widget.todoList.length, false);
+    _selectedItems = List<bool>.filled(widget.todoList.length, false);
     super.initState();
   }
 
-  void loadTrigger(bool flag) {
+  void _setLoading(bool loading) {
     if (mounted) {
       setState(() {
-        _isLoading = flag;
+        _isLoading = loading;
       });
     }
   }
 
-  void handleCarryOverTasks() async {
+  Future<void> _handleCarryOverTasks() async {
     final todoState = context.read<TodoState>();
-    List<Todo> todoCarryOverTasks = [];
+    final todoCarryOverTasks = <Todo>[];
 
-    for (int i = 0; i < todoCarriedList.length; i++) {
-      if (todoCarriedList[i]) {
+    for (int i = 0; i < _selectedItems.length; i++) {
+      if (_selectedItems[i]) {
         final todo = widget.todoList[i];
         final newTodo = todo.copyWith(
           date: DateTime.now(),
@@ -52,7 +52,7 @@ class _TodoDelayDialogState extends State<TodoDelayDialog> {
       return;
     }
 
-    loadTrigger(true);
+    _setLoading(true);
     try {
       // Provider経由で一括更新
       await todoState.updateTodos(todoCarryOverTasks);
@@ -70,8 +70,15 @@ class _TodoDelayDialogState extends State<TodoDelayDialog> {
         );
       }
     } finally {
-      loadTrigger(false);
+      _setLoading(false);
     }
+  }
+
+  void _toggleSelectAll() {
+    final isAllSelected = _selectedItems.every((e) => e);
+    setState(() {
+      _selectedItems.fillRange(0, _selectedItems.length, !isAllSelected);
+    });
   }
 
   @override
@@ -103,15 +110,10 @@ class _TodoDelayDialogState extends State<TodoDelayDialog> {
             Row(
               children: [
                 TextButton(
-                  onPressed: () {
-                    bool isAllChecked = todoCarriedList.every((e) => e);
-                    setState(() {
-                      todoCarriedList = todoCarriedList.map((_) => !isAllChecked).toList();
-                    });
-                  }, 
-                  child: Text(todoCarriedList.every((e) => e) ? "Unselect all" : "Do all"),
+                  onPressed: _toggleSelectAll,
+                  child: Text(_selectedItems.every((e) => e) ? "Unselect all" : "Select all"),
                 ),
-                Text(
+                const Text(
                   "or Select each task.",
                   style: TextStyle(fontSize: 16, color: Colors.grey),
                 )
@@ -130,11 +132,11 @@ class _TodoDelayDialogState extends State<TodoDelayDialog> {
                     contentPadding: EdgeInsets.zero,
                     title: Text(todo.title),
                     subtitle: Text("Original: ${todo.date.month}/${todo.date.day}"),
-                    value: todoCarriedList[index],
+                    value: _selectedItems[index],
                     onChanged: (val) {
                       if (val != null) {
                         setState(() {
-                          todoCarriedList[index] = val;
+                          _selectedItems[index] = val;
                         });
                       }
                     },
@@ -158,7 +160,7 @@ class _TodoDelayDialogState extends State<TodoDelayDialog> {
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(horizontal: 24),
                     ),
-                    onPressed: _isLoading ? null : handleCarryOverTasks,
+                    onPressed: _isLoading ? null : _handleCarryOverTasks,
                     child: _isLoading
                         ? const SizedBox(
                             height: 20,

@@ -20,24 +20,33 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: DefaultTabController(
-        length: 2, 
-        child: Scaffold(
-          appBar: AppBar(
-            title: const Text("Scheduled Study Tasks"),
-            bottom: const TabBar(tabs: [
-              Tab(icon: Icon(Icons.home)),
-              Tab(icon: Icon(Icons.analytics))
-            ]),
-          ),
-          body: const TabBarView(children: [
-            TasksScreen(),
-            StatsScreen(),
-          ])
-        ),
-      ),
+      home: const HomeScreen(),
       theme: ThemeData(
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+      ),
+    );
+  }
+}
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text("Scheduled Study Tasks"),
+          bottom: const TabBar(tabs: [
+            Tab(icon: Icon(Icons.home)),
+            Tab(icon: Icon(Icons.analytics))
+          ]),
+        ),
+        body: const TabBarView(children: [
+          TasksScreen(),
+          StatsScreen(),
+        ]),
       ),
     );
   }

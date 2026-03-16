@@ -9,10 +9,14 @@ import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 // build contextの型の拡張のためにproviderのインポートが必要。
 
-enum PreferedDays {
-  everyday,
-  weekdays,
-  weekends,
+enum TaskFrequency {
+  once(label: 'this date'),
+  weekends(label: 'weekends'),
+  weekdays(label: 'weekdays'),
+  everyday(label: 'weeklong');
+
+  final String label;
+  const TaskFrequency({required this.label});
 }
 
 class TodoTaskForm extends StatefulWidget {
@@ -24,29 +28,16 @@ class TodoTaskForm extends StatefulWidget {
 
 class _TodoTaskFormState extends State<TodoTaskForm> {
   bool _isLoading = false;
-  void loadTrigger(bool initiate) {
-    if(initiate) {
-      setState(() {
-        _isLoading = true;
-      });
-    }else {
-      setState(() {
-        _isLoading = false;
-      });
-    }
+  void _setLoading(bool loading) {
+    setState(() {
+      _isLoading = loading;
+    });
   }
 
   final _formKey = GlobalKey<FormState>();
   final Map<String, dynamic> _formData = {};
 
-  final Map<String, dynamic> dueDateFilter = {
-    "this date": null,
-    "weekends": PreferedDays.weekends, 
-    "weekdays": PreferedDays.weekdays,
-    "weeklong": PreferedDays.everyday,
-  };
-
-  String _selectedDateFilter = "this date";
+  TaskFrequency _selectedFrequency = TaskFrequency.once;
   int _targetWeeks = 0;
 
 
@@ -72,41 +63,30 @@ class _TodoTaskFormState extends State<TodoTaskForm> {
       int? targetStudyAmount = _formData.containsKey("targetStudyAmount") ? int.parse(_formData["targetStudyAmount"]) : null;
       
       try{
-        loadTrigger(true);
+        _setLoading(true);
 
-        if(_selectedDateFilter == "this date") {
-          DateTime targetDate = _selectedDay;
-          await todoState.saveTodo(Todo(
+        List<DateTime> dueDateList = pickupDueDates(
+          targetDate: _selectedDay, 
+          days: _selectedFrequency, 
+          weeks: _targetWeeks
+        );
+
+        if(dueDateList.isEmpty) {
+          throw "Something went wrong. Please report to developer";
+        }
+
+        List<Todo> todoList = dueDateList
+          .map((targetDate) => Todo(
             id: uuid.v4(), 
             title: title, 
             targetStudyTime: targetStudyTime,
             targetStudyAmount: targetStudyAmount,
             date: targetDate
-          ));
+          ))
+          .toList();
 
-        }else{
-          List<DateTime> dueDateList = pickupDueDates(
-            targetDate: _selectedDay, 
-            days: dueDateFilter[_selectedDateFilter], 
-            weeks: _targetWeeks
-          );
-
-          if(dueDateList.isEmpty) {
-            throw "Something went wrong. Please report to developer";
-          }
-
-          List<Todo> todoList = dueDateList
-            .map((targetDate) => Todo(
-              id: uuid.v4(), 
-              title: title, 
-              targetStudyTime: targetStudyTime,
-              targetStudyAmount: targetStudyAmount,
-              date: targetDate
-            ))
-            .toList();
-
-          await todoState.saveTodos(todoList);
-        }
+        await todoState.saveTodos(todoList);
+        
 
         if(mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -123,7 +103,7 @@ class _TodoTaskFormState extends State<TodoTaskForm> {
         }
 
       } finally{
-        loadTrigger(false);
+        _setLoading(false);
       }
     }
   }
@@ -223,22 +203,21 @@ class _TodoTaskFormState extends State<TodoTaskForm> {
                         });
                       },
                     ),
-                    DropdownButton(
-                      items: dueDateFilter
-                        .keys
-                        .map((filter) => DropdownMenuItem(value: filter, child: Text(filter)))
+                    DropdownButton<TaskFrequency>(
+                      items: TaskFrequency.values
+                        .map((freq) => DropdownMenuItem(value: freq, child: Text(freq.label)))
                         .toList(), 
-                      value: _selectedDateFilter, 
+                      value: _selectedFrequency, 
                       onChanged: (val) {
                         if (val != null) {
                           setState(() {
-                            _selectedDateFilter = val;
+                            _selectedFrequency = val;
                           });
                         }
                       }
                     ),
 
-                    if(_selectedDateFilter != "this date")
+                    if(_selectedFrequency != TaskFrequency.once)
                       TextFormField(
                         keyboardType: TextInputType.number,
                         // controller: _studyAmountEditingController,
@@ -298,13 +277,10 @@ class _TodoTaskFormState extends State<TodoTaskForm> {
 
 List<DateTime> pickupDueDates({
   required DateTime targetDate, 
-  required PreferedDays? days, 
+  required TaskFrequency days, 
   required int weeks,
 }) {
   List<DateTime> dates = [];
-  if (days == null) {
-    return dates;
-  }
 
   for (var j = 0; j < weeks; j++) {
     for (var i = 0; i < 7; i++) {
@@ -312,17 +288,20 @@ List<DateTime> pickupDueDates({
       DateTime dueDate = targetDate.add(Duration(days: (j * 7) + i));
 
       switch (days) {
-        case PreferedDays.everyday:
+        case TaskFrequency.once:
+          return [dueDate];
+
+        case TaskFrequency.everyday:
           dates.add(dueDate);
           break;
 
-        case PreferedDays.weekends:
+        case TaskFrequency.weekends:
           if(dueDate.weekday == DateTime.saturday || dueDate.weekday == DateTime.sunday) {
             dates.add(dueDate);
           }
           break;
 
-        case PreferedDays.weekdays:
+        case TaskFrequency.weekdays:
           if (DateTime.monday <= dueDate.weekday && dueDate.weekday <= DateTime.friday) {
             dates.add(dueDate);
           }
