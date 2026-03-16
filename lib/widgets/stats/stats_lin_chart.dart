@@ -44,6 +44,8 @@ class StatsLinChart extends StatelessWidget {
               bottomTitles: AxisTitles(
                 sideTitles: SideTitles(
                   showTitles: true,
+                  interval: 1,
+                  reservedSize: 30,
                   getTitlesWidget: (val, _) {
                     final index = val.toInt();
                     // 範囲外アクセスを防ぐガード

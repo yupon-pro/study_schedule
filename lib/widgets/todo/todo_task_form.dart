@@ -110,167 +110,214 @@ class _TodoTaskFormState extends State<TodoTaskForm> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text("Todo Task Form"),
+        title: const Text("Create Task"),
+        centerTitle: true,
+        backgroundColor: theme.colorScheme.inversePrimary,
       ),
       body: SingleChildScrollView(
-        child: Container(
-          padding: EdgeInsets.all(10),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16.0),
           child: Form(
             key: _formKey,
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-
-                TextFormField(
-                  maxLines: 3,
-                  decoration: InputDecoration(
-                    labelText: "Task Title",
-                    border: OutlineInputBorder(),
+                buildSectionTitle(theme, "Basic Information", Icons.edit_note),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: TextFormField(
+                    maxLines: 2,
+                    decoration: InputDecoration(
+                      labelText: "Task Title",
+                      hintText: "What are you studying?",
+                      prefixIcon: const Icon(Icons.title),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      filled: true,
+                      fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.1),
+                    ),
+                    inputFormatters: [LengthLimitingTextInputFormatter(50)],
+                    validator: (value) => (value == null || value.isEmpty) ? 'Please write a title' : null,
+                    onSaved: (val) => _formData["title"] = val,
                   ),
-                  inputFormatters: [
-                    LengthLimitingTextInputFormatter(50),
-                  ],
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please write a title of your task';
-                    }
-                    return null;
-                  },
-                  onSaved: (val) {
-                    _formData["title"] = val;
-                  },
                 ),
 
-                FormField(
-                  builder: (state) {
-                    return Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                const SizedBox(height: 24),
+
+                buildSectionTitle(theme, "Study Goals", Icons.track_changes),
+                Card(
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  elevation: 0,
+                  color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.1),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
                       children: [
-                        TodoTimePicker(
-                          label: "H", 
-                          items: _hours, 
-                          handleTimeChange:  (index) {
-                            _formData["targetStudyHours"] = _hours[index];
-                          },
+                        Row(
+                          children: [
+                            const Icon(Icons.access_time, size: 20),
+                            const SizedBox(width: 8),
+                            Text("Target Time", style: theme.textTheme.titleSmall),
+                          ],
                         ),
-                        TodoTimePicker(
-                          label: "M", 
-                          items: _minutes, 
-                          handleTimeChange: (index) {
-                            _formData["targetStudyMinutes"] = _minutes[index];
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TodoTimePicker(
+                                label: "H",
+                                items: _hours,
+                                handleTimeChange: (index) => _formData["targetStudyHours"] = _hours[index],
+                              ),
+                            ),
+                            const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 8),
+                              child: Text(":", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                            ),
+                            Expanded(
+                              child: TodoTimePicker(
+                                label: "M",
+                                items: _minutes,
+                                handleTimeChange: (index) => _formData["targetStudyMinutes"] = _minutes[index],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Divider(height: 32),
+                        TextFormField(
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: "Target Amount",
+                            prefixIcon: Icon(Icons.menu_book),
+                            suffixText: "pages/questions",
+                            border: UnderlineInputBorder(),
+                          ),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(3),
+                          ],
+                          validator: (val) {
+                            if (val == null) {
+                              return null;
+                            }
+                            if(val.isEmpty || val == "0") {
+                              return "Please enter 1 or more";
+                            }
+                            return null;
+                          },
+                          onSaved: (val) {
+                            if (val != null && val.isNotEmpty) _formData["targetStudyAmount"] = int.parse(val);
                           },
                         ),
                       ],
-                    );
-                  },
-                ),
-
-                TextFormField(
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: "Study amount",
-                    suffixText: "pages/questions",
+                    ),
                   ),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(3),
-                  ],
-                  onSaved: (val) {
-                    if (val != null && val.isNotEmpty) {
-                      _formData["targetStudyAmount"] = int.parse(val);
-                    }
-                  },
                 ),
 
-                Column(
-                  children: <Widget>[
-                    TodoCalendar(
-                      focusedDay: _focusedDay, 
-                      selectedDay: _selectedDay, 
-                      format: _calendarFormat, 
-                      thisYear: DateTime.now().year, 
-                      onHandleDay: (selectedDay, focusedDay) {
-                        setState(() {
-                          _selectedDay = selectedDay;
-                          _focusedDay = focusedDay;
-                        });
-                      },
-                      onHandleFormat: (format) {
-                        setState(() {
-                          _calendarFormat = format;
-                        });
-                      },
-                    ),
-                    DropdownButton<TaskFrequency>(
-                      items: TaskFrequency.values
-                        .map((freq) => DropdownMenuItem(value: freq, child: Text(freq.label)))
-                        .toList(), 
-                      value: _selectedFrequency, 
-                      onChanged: (val) {
-                        if (val != null) {
-                          setState(() {
-                            _selectedFrequency = val;
-                          });
-                        }
-                      }
-                    ),
+                const SizedBox(height: 24),
 
-                    if(_selectedFrequency != TaskFrequency.once)
-                      TextFormField(
-                        keyboardType: TextInputType.number,
-                        // controller: _studyAmountEditingController,
-                        decoration: const InputDecoration(
-                          labelText: "How many weeks?",
-                          suffixText: "weeks",
+                buildSectionTitle(theme, "Schedule & Repeat", Icons.calendar_month),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: theme.dividerColor.withValues(alpha: 0.5)),
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          LengthLimitingTextInputFormatter(1),
-                        ],
-                        validator: (val) {
-                          if (val == null || val.isEmpty || val == "0") {
-                            return "Please select 1 weeks or more";
-                          }
-
-                          return null;
-                        },
+                        child: TodoCalendar(
+                          focusedDay: _focusedDay,
+                          selectedDay: _selectedDay,
+                          format: _calendarFormat,
+                          thisYear: DateTime.now().year,
+                          onHandleDay: (selectedDay, focusedDay) {
+                            setState(() {
+                              _selectedDay = selectedDay;
+                              _focusedDay = focusedDay;
+                            });
+                          },
+                          onHandleFormat: (format) => setState(() => _calendarFormat = format),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      
+                      
+                      DropdownButtonFormField<TaskFrequency>(
+                        initialValue: _selectedFrequency,
+                        decoration: const InputDecoration(
+                          labelText: "Repeat Frequency",
+                          prefixIcon: Icon(Icons.repeat),
+                          border: OutlineInputBorder(),
+                        ),
+                        items: TaskFrequency.values
+                            .map((freq) => DropdownMenuItem(value: freq, child: Text(freq.label)))
+                            .toList(),
                         onChanged: (val) {
-                          setState(() {
-                            final weeks = int.tryParse(val);
-                            if (weeks != null) {
-                              _targetWeeks = weeks;
-                            }
-                          });
+                          if (val != null) setState(() => _selectedFrequency = val);
                         },
-                      )
-                  ],
-                ),
+                      ),
 
-                Container(
-                  margin: EdgeInsets.only(top: 20),
-                  child: SizedBox(
-                    height: 30,
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : onSubmit,
-                      child: _isLoading 
-                        ? const SizedBox(
-                            height: 20, 
-                            width: 20, 
-                            child: CircularProgressIndicator(strokeWidth: 2)
-                          )
-                        : const Text("Submit"),
-                    ),
+                      if (_selectedFrequency != TaskFrequency.once) ...[
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: "Duration",
+                            suffixText: "weeks",
+                            helperText: "For how many weeks should this repeat?",
+                            border: OutlineInputBorder(),
+                          ),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(1),
+                          ],
+                          validator: (val) {
+                            if (val == null || val.isEmpty || val == "0") return "Please enter 1 or more";
+                            return null;
+                          },
+                          onChanged: (val) {
+                            final weeks = int.tryParse(val);
+                            if (weeks != null) setState(() => _targetWeeks = weeks);
+                          },
+                        ),
+                      ],
+                    ],
                   ),
                 ),
 
+                const SizedBox(height: 40),
+
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: FilledButton.icon(
+                    onPressed: _isLoading ? null : onSubmit,
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 56),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    icon: _isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Icon(Icons.check_circle_outline),
+                    label: const Text("Confirm & Save", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                const SizedBox(height: 32),
               ],
-            ), 
+            ),
           ),
-        )
-      )
+        ),
+      ),
     );
   }
 }
@@ -311,4 +358,21 @@ List<DateTime> pickupDueDates({
   }
 
   return dates;
+}
+
+
+Widget buildSectionTitle(ThemeData theme, String title, IconData icon) {
+  return Padding(
+    padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+    child: Row(
+      children: [
+        Icon(icon, color: theme.colorScheme.primary, size: 20),
+        const SizedBox(width: 8),
+        Text(title, style: theme.textTheme.titleMedium?.copyWith(
+          color: theme.colorScheme.primary,
+          fontWeight: FontWeight.bold,
+        )),
+      ],
+    ),
+  );
 }
