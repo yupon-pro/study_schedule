@@ -11,6 +11,26 @@ import 'package:study_schedule/widgets/todo/todo_task_form.dart';
 import 'package:study_schedule/widgets/todo/todo_task_list.dart';
 import 'package:table_calendar/table_calendar.dart';
 
+enum Segments {
+  all("All"),
+  ongoing("Ongoing"),
+  completed("Completed");
+
+  final String displayName;
+  const Segments(this.displayName);
+
+  static List<String> getStringDisplayName() {
+    return Segments.values.map((filter) => filter.displayName).toList();
+  }
+
+  static Segments getEnumValueFromString(String displayName) {
+    return Segments.values.firstWhere(
+      (filter) => filter.displayName == displayName,
+      orElse: () => Segments.all,
+    );
+  }
+}
+
 class TasksScreen extends StatefulWidget {
   const TasksScreen({super.key});
 
@@ -19,8 +39,8 @@ class TasksScreen extends StatefulWidget {
 }
 
 class _TasksScreenState extends State<TasksScreen> {
-  List<String> segments = ["All", "Ongoing", "Completed"];
-  String selectedFilter = "All";
+  final List<String> _segments = Segments.getStringDisplayName();
+  Segments _selectedFilter = Segments.all;
 
   DateTime _selectedDay = DateTime.now();
   DateTime _focusedDay = DateTime.now();
@@ -28,7 +48,7 @@ class _TasksScreenState extends State<TasksScreen> {
 
   void onHandleFilter(String newSelection) {
     setState(() {
-      selectedFilter = newSelection;
+      _selectedFilter = Segments.getEnumValueFromString(newSelection);
     });
   }
 
@@ -84,15 +104,13 @@ class _TasksScreenState extends State<TasksScreen> {
     final filteredTodoList = todoState
       .getTodosByDate(_selectedDay)
       .where((todo) {
-        switch (selectedFilter) {
-          case "All":
+        switch (_selectedFilter) {
+          case Segments.all:
             return true;
-          case "Ongoing":
+          case Segments.ongoing:
             return todo.achievement != Achievement.fulfilled;
-          case "Completed":
+          case Segments.completed:
             return todo.achievement == Achievement.fulfilled;
-          default:
-            return false;
         }
       })
       .toList();
@@ -106,8 +124,8 @@ class _TasksScreenState extends State<TasksScreen> {
       body: Column(
         children: <Widget>[
           FilterSegment(
-            segments: segments, 
-            currentSelection: selectedFilter, 
+            segments: _segments, 
+            currentSelection: _selectedFilter.displayName, 
             onHandleFilter: onHandleFilter
           ),
 

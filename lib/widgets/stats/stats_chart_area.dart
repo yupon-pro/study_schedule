@@ -6,8 +6,7 @@ import 'package:study_schedule/widgets/stats/stats_charts.dart';
 enum Segments {
   achivementRate("Achivement Rate"),
   totalStudyTime("Total Study Time"),
-  totalStudyAmount("Total Study Amount"),
-  ;
+  totalStudyAmount("Total Study Amount");
 
   const Segments(this.displayName);
 
