@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:study_schedule/models/todo.dart';
+import 'package:study_schedule/active_records/todo.dart';
 import 'package:study_schedule/providers/todo_state.dart';
 import 'package:provider/provider.dart';
 

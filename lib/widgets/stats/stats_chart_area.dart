@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:study_schedule/models/todo.dart';
+import 'package:study_schedule/active_records/todo.dart';
 import 'package:study_schedule/widgets/common/filter_segment.dart';
 import 'package:study_schedule/widgets/stats/stats_charts.dart';
 

@@ -1,4 +1,4 @@
-import "package:study_schedule/models/todo.dart";
+import "package:study_schedule/active_records/todo.dart";
 
 abstract class TodoRepository {
   Future<List<Todo>> findAll();

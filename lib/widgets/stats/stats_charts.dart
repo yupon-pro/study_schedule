@@ -3,7 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:study_schedule/models/todo.dart';
+import 'package:study_schedule/active_records/todo.dart';
 import 'package:study_schedule/widgets/stats/stats_chart_area.dart';
 import 'package:study_schedule/widgets/stats/stats_lin_chart.dart';
 import 'package:study_schedule/widgets/stats/stats_stack_bar_chart.dart';

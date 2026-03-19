@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:study_schedule/models/todo.dart';
+import 'package:study_schedule/active_records/todo.dart';
 import 'package:study_schedule/providers/todo_state.dart';
 import 'package:provider/provider.dart';
 import 'package:study_schedule/widgets/todo/todo_time_picker.dart';

@@ -1,5 +1,5 @@
 import "package:study_schedule/repository/todo.dart";
-import "package:study_schedule/models/todo.dart";
+import "package:study_schedule/active_records/todo.dart";
 import "package:shared_preferences/shared_preferences.dart";
 import "dart:convert";
 
