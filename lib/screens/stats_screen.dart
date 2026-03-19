@@ -3,14 +3,10 @@ import 'package:study_schedule/providers/todo_state.dart';
 import 'package:study_schedule/widgets/stats/stats_chart_area.dart';
 import 'package:provider/provider.dart';
 
-class StatsScreen extends StatefulWidget {
+
+class StatsScreen extends StatelessWidget {
   const StatsScreen({super.key});
-
-  @override
-  State<StatefulWidget> createState() => _StatsScreenState();
-}
-
-class _StatsScreenState extends State<StatsScreen> {
+  
   @override
   Widget build(BuildContext context) {
     

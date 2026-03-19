@@ -7,13 +7,12 @@ enum Achievement {
   none,
 }
 
-@immutable // インスタンスが不変であることを示すアノテーション
+@immutable 
 class Todo {
   final String id;
   final String title;
   final DateTime date;
 
-  // 任意項目（Null許容）
   final int? targetStudyTime;
   final int? actualStudyTime;
   final int? targetStudyAmount;
@@ -36,7 +35,6 @@ class Todo {
     this.remarks,
   });
 
-  /// 特定のフィールドだけを更新した新しいインスタンスを作成する
   Todo copyWith({
     String? title,
     DateTime? date,
@@ -49,7 +47,7 @@ class Todo {
     String? remarks,
   }) {
     return Todo(
-      id: id, // IDは常に固定
+      id: id,
       title: title ?? this.title,
       date: date ?? this.date,
       achievement: achievement ?? this.achievement,
@@ -62,7 +60,6 @@ class Todo {
     );
   }
 
-  /// JSON (Map) からインスタンスを生成する
   factory Todo.fromJson(Map<String, dynamic> json) {
     return Todo(
       id: json["id"] as String,
@@ -80,7 +77,6 @@ class Todo {
     );
   }
 
-  /// インスタンスを JSON (Map) に変換する
   Map<String, dynamic> toJson() {
     return {
       "id": id,

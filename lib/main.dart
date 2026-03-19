@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:study_schedule/providers/todo_state.dart';
-import 'package:study_schedule/repository/local_todo.dart';
+import 'package:study_schedule/infra/local_todo.dart';
 import 'package:study_schedule/screens/stats_screen.dart';
 import 'package:study_schedule/screens/tasks_screen.dart';
 
